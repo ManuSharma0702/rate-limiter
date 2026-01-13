@@ -1,12 +1,18 @@
-use axum::{Router, middleware, routing::get};
+use axum::{Router, middleware::{from_fn_with_state}, routing::get};
+use tokio::sync::mpsc;
 
-use crate::limiter::token_bucket::rate_limit_middleware;
+use crate::limiter::token_bucket::{rate_limit_middleware, token_bucket_task};
 
 pub async fn run() {
+
+    let (tx_limiter, rx_limiter) = mpsc::channel(1024);
+
+    tokio::spawn(token_bucket_task(rx_limiter));
+
     let app = Router::new().
         route("/limited", get(handle_limited))
         .route("/unlimited", get(handle_unlimited))
-        .layer(middleware::from_fn(rate_limit_middleware));
+        .layer(from_fn_with_state(tx_limiter.clone(), rate_limit_middleware));
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
         .await

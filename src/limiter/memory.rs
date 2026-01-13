@@ -1,14 +1,17 @@
 use std::collections::HashMap;
 
-use crate::limiter::rate_limiter::RateLimiter;
+use async_trait::async_trait;
 
+use crate::limiter::{rate_limiter::RateLimiter, types::TokenBucket};
+
+//Map of IP to token count
 pub struct InMemoryTokenBucket {
-    buckets: HashMap<String, String>
+    pub buckets: HashMap<String, TokenBucket>,
 }
 
+#[async_trait]
 impl RateLimiter for InMemoryTokenBucket {
-    fn allow<'async_trait>() ->  ::core::pin::Pin<Box<dyn ::core::future::Future<Output = ()> + ::core::marker::Send+'async_trait> > {
-        
-        !unimplemented!()
+    async fn allow(&self, key: String) -> bool {
+        false
     }
 }
