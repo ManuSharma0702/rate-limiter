@@ -1,4 +1,6 @@
-use axum::{Router, middleware::{from_fn_with_state}, routing::get};
+use std::net::SocketAddr;
+
+use axum::{Router, middleware::from_fn_with_state, routing::get};
 use tokio::sync::mpsc;
 
 use crate::limiter::token_bucket::{rate_limit_middleware, token_bucket_task};
@@ -14,11 +16,11 @@ pub async fn run() {
         .route_layer(from_fn_with_state(tx_limiter.clone(), rate_limit_middleware))
         .route("/unlimited", get(handle_unlimited));
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080")
         .await
         .unwrap();
 
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await.unwrap();
 }
 
 async fn handle_limited() -> &'static str {

@@ -1,7 +1,9 @@
 use tokio::sync::oneshot::Sender;
+use async_trait::async_trait;
 
-pub struct TokenBucket{
-    count: i32
+#[async_trait]
+pub trait RateLimiter {
+    async fn allow(&mut self, key: String) -> bool;
 }
 
 #[derive(Debug)]

@@ -1,18 +1,26 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, net::SocketAddr};
 
 use axum::{
-    extract::{Request as AxumRequest, State}, http::StatusCode, middleware::Next, response::{Response, IntoResponse}
+    extract::{ConnectInfo, Request as AxumRequest, State}, http::StatusCode, middleware::Next, response::{IntoResponse, Response}
 };
-use tokio::sync::{mpsc::{self, Receiver}, oneshot};
+use tokio::{sync::{mpsc::{self, Receiver}, oneshot}, time::Instant};
 
-use crate::limiter::{memory::InMemoryTokenBucket, rate_limiter::RateLimiter, types::{LimiterMsg, Request}};
+use crate::limiter::{memory::InMemoryTokenBucket, types::{LimiterMsg, Request, RateLimiter}};
 
 pub async fn rate_limit_middleware(
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(tx_limiter): State<mpsc::Sender<LimiterMsg>>,
     req: AxumRequest,
     next: Next,
 ) -> Response {
-    let key = "a".to_string();
+
+    let api_key = req
+        .headers()
+        .get("x-api-key")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("anon");
+
+    let key = format!("{}:{}", addr.ip(), api_key);
 
     let (tx_middleware, rx_middleware) = oneshot::channel();
 
@@ -45,7 +53,7 @@ pub async fn rate_limit_middleware(
 
 pub async fn token_bucket_task(mut rx_limiter: Receiver<LimiterMsg>) {
     
-    let token_bucket = InMemoryTokenBucket {
+    let mut token_bucket = InMemoryTokenBucket {
         buckets: HashMap::new()
     };
 
@@ -62,3 +70,6 @@ pub async fn token_bucket_task(mut rx_limiter: Receiver<LimiterMsg>) {
         }
     }
 }
+
+
+
