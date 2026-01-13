@@ -3,14 +3,7 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use tokio::time::Instant;
 
-use crate::limiter::types::RateLimiter;
-
-#[derive(Debug)]
-pub struct Bucket{
-    tokens: u64,
-    capacity: u64,
-    last_refill: Instant
-}
+use crate::limiter::types::{Bucket, RateLimiter};
 
 pub struct InMemoryTokenBucket {
     pub buckets: HashMap<String, Bucket>,

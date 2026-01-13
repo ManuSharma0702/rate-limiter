@@ -1,5 +1,12 @@
-use tokio::sync::oneshot::Sender;
+use tokio::{sync::oneshot::Sender, time::Instant};
 use async_trait::async_trait;
+
+#[derive(Debug)]
+pub struct Bucket{
+    pub tokens: u64,
+    pub capacity: u64,
+    pub last_refill: Instant
+}
 
 #[async_trait]
 pub trait RateLimiter {
