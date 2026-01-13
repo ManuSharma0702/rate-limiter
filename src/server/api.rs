@@ -11,8 +11,8 @@ pub async fn run() {
 
     let app = Router::new().
         route("/limited", get(handle_limited))
-        .route("/unlimited", get(handle_unlimited))
-        .layer(from_fn_with_state(tx_limiter.clone(), rate_limit_middleware));
+        .route_layer(from_fn_with_state(tx_limiter.clone(), rate_limit_middleware))
+        .route("/unlimited", get(handle_unlimited));
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
         .await

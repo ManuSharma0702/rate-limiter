@@ -33,7 +33,7 @@ pub async fn rate_limit_middleware(
         }
         Ok(Request::Reject) => {
             dbg!("REJECTED");
-            StatusCode::FORBIDDEN.into_response()
+            StatusCode::TOO_MANY_REQUESTS.into_response()
         }
         Err(_) => {
             dbg!("SERVER DOWN");
